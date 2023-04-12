@@ -12,11 +12,6 @@ jobs:
       - name: Checkout this repo
         uses: actions/checkout@v3
         
-      - name: Read branches.json
-        run: |
-          echo "PREV=$(type branches.json)" >> $GITHUB_ENV
-          echo "${{ env.PREV }}"
-        
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v3
         with:
