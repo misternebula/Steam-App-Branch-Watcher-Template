@@ -1,0 +1,31 @@
+on:
+  workflow_dispatch:
+  #schedule:
+  #- cron: "*/10 * * * *"
+  
+jobs:
+  check:
+    name: check steam branches
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v3
+        
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '6.0.x'
+          
+      - name: Install dependencies
+        run: |
+          dotnet add package Newtonsoft.Json --version 13.0.3
+          dotnet add package Discord.Net --version 3.10.0
+          dotnet add package SteamKit2 --version 2.4.1
+          
+      - name: Build
+        run: dotnet build
+        
+      - name: Run program
+        run: |
+          ./bin/Debug/OuterWildsBranchWatcher.exe ${{ secrets.STEAM_USERNAME }} ${{ secrets.STEAM_PASSWORD }} ${{ secrets.BOT_TOKEN }} ""
