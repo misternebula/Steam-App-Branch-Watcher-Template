@@ -169,8 +169,8 @@ public class Program
 		client.Ready += async () =>
 		{
 			var guild = client.GetGuild(929708786027999262);
-			//var channel = guild.GetTextChannel(939053638310064138); // #outer-wilds-chat
-			var channel = guild.GetTextChannel(1057602032850186300); // #test-channel
+			var channel = guild.GetTextChannel(939053638310064138); // #outer-wilds-chat
+			//var channel = guild.GetTextChannel(1057602032850186300); // #test-channel
 
 			List<Embed> embeds = new();
 
