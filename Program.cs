@@ -52,6 +52,7 @@ public class Program
 		manager.Subscribe<SteamApps.PICSProductInfoCallback>(OnPICSProductInfo); 
 
 		var isRunning = true;
+		Console.WriteLine($"Trying to connect to Steam...");
 		steamClient.Connect();
 
 		while (isRunning)
