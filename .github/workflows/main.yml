@@ -26,8 +26,10 @@ jobs:
       - name: Build
         run: dotnet build
         
-      
+      - name: Read branches.json
+        run: |
+          echo "PREV=${type branches.json}" >> $GITHUB_ENV
         
       - name: Run program
         run: |
-          ./bin/Debug/net6.0/OuterWildsBranchWatcher.exe '${{ secrets.STEAM_USERNAME }}' '${{ secrets.STEAM_PASSWORD }}' '[]' '${{ secrets.BOT_TOKEN }}'
+          ./bin/Debug/net6.0/OuterWildsBranchWatcher.exe '${{ secrets.STEAM_USERNAME }}' '${{ secrets.STEAM_PASSWORD }}' '${{ env.PREV }}' '${{ secrets.BOT_TOKEN }}'
