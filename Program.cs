@@ -29,6 +29,7 @@ public class Program
 	{
 		if (args.Length < 4)
 		{
+			Console.WriteLine($"Incorrect number of arguments. Expected 4, found {args.Length}");
 			return;
 		}
 
@@ -37,7 +38,7 @@ public class Program
 
 		var previous = JsonConvert.DeserializeObject<BranchInfo[]>(args[3]);
 
-		var discordToken = args[3];
+		var discordToken = args[4];
 
 		var steamClient = new SteamClient();
 		var manager = new CallbackManager(steamClient);
@@ -60,6 +61,7 @@ public class Program
 
 		void OnConnected(SteamClient.ConnectedCallback callback)
 		{
+			Console.WriteLine($"Connected to Steam. Logging on...");
 			steamUser.LogOn(new SteamUser.LogOnDetails
 			{
 				Username = user,
@@ -69,6 +71,7 @@ public class Program
 
 		void OnDisconnected(SteamClient.DisconnectedCallback callback)
 		{
+			Console.WriteLine($"Disconnected from Steam.");
 			isRunning = false;
 		}
 
@@ -80,11 +83,14 @@ public class Program
 				return;
 			}
 
+			Console.WriteLine($"Logged into Steam.");
+
 			await appHandler.PICSGetProductInfo(new SteamApps.PICSRequest(OW_APPID), null, false);
 		}
 
 		void OnPICSProductInfo(SteamApps.PICSProductInfoCallback callback)
 		{
+			Console.WriteLine($"Recieved PICS data.");
 			var item = callback.Apps.Single();
 
 			var KeyValues = item.Value.KeyValues;
@@ -138,7 +144,12 @@ public class Program
 
 			if (newBranches.Count > 0 || updatedBranches.Count > 0)
 			{
+				Console.WriteLine($"Found changes.");
 				new Program().MainAsync(discordToken, newBranches, deletedBranches, updatedBranches).Wait();
+			}
+			else
+			{
+				Console.WriteLine($"No changes found.");
 			}
 
 			steamUser.LogOff();
@@ -148,7 +159,7 @@ public class Program
 	public async Task MainAsync(string discordToken, List<BranchInfo> newBranches, List<BranchInfo> deletedBranches, List<BranchInfo> updatedBranches)
 	{
 		var client = new DiscordSocketClient();
-		//client.Log += Log;
+		client.Log += Log;
 		await client.LoginAsync(TokenType.Bot, discordToken);
 		await client.StartAsync();
 
