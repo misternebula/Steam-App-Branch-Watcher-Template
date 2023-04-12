@@ -143,14 +143,14 @@ public class Program
 
 			Console.WriteLine(Directory.GetCurrentDirectory());
 
-			foreach (var item2 in Directory.GetFiles("../../branches.json"))
+			foreach (var item2 in Directory.GetFiles(Directory.GetCurrentDirectory()))
 			{
 				Console.WriteLine(item2);
 			}
 
-			Console.WriteLine(File.Exists("../../branches.json"));
+			Console.WriteLine(File.Exists("branches.json"));
 
-			previous = JsonConvert.DeserializeObject<BranchInfo[]>(File.ReadAllText("../../branches.json"));
+			previous = JsonConvert.DeserializeObject<BranchInfo[]>(File.ReadAllText("branches.json"));
 
 			foreach (var oldBranch in previous)
 			{
