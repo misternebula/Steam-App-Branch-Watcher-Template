@@ -2,7 +2,6 @@
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using SteamKit2;
-using static SteamKit2.Internal.PublishedFileDetails;
 
 namespace OuterWildsBranchWatcher;
 
@@ -19,20 +18,24 @@ public class BranchInfo
 
 	[JsonProperty("buildId")]
 	public int BuildId = -1;
+
+	[JsonProperty("pwdRequired")]
+	public int PwdRequired = 0;
 }
 
 public class Program
 {
 	public const int OW_APPID = 753640;
 
+	const string BUILDID = "buildid";
+	const string DEPOTS = "depots";
+	const string BRANCHES = "branches";
+	const string TIMEUPDATED = "timeupdated";
+	const string PWDREQUIRED = "pwdrequired";
+	const string DESCRIPTION = "description";
+
 	public static void Main(params string[] args)
 	{
-		if (args.Length < 3)
-		{
-			Console.WriteLine($"Incorrect number of arguments. Expected 4, found {args.Length}");
-			return;
-		}
-
 		var user = args[0];
 		var pass = args[1];
 		var discordToken = args[2];
@@ -75,8 +78,6 @@ public class Program
 
 		async void OnLoggedOn(SteamUser.LoggedOnCallback callback)
 		{
-			Console.WriteLine($"Received LoggedOn callback...");
-
 			if (callback.Result != EResult.OK)
 			{
 				Console.WriteLine($"Failed to log into Steam. Result:{callback.Result} ExtendedResult:{callback.Result}");
@@ -96,8 +97,8 @@ public class Program
 
 			var KeyValues = item.Value.KeyValues;
 
-			var depots = KeyValues["depots"];
-			var branches = depots["branches"];
+			var depots = KeyValues[DEPOTS];
+			var branches = depots[BRANCHES];
 
 			var newBranchInfoArray = new BranchInfo[branches.Children.Count];
 
@@ -105,13 +106,18 @@ public class Program
 			{
 				var child = branches.Children[i];
 
-				var timeupdated = child["timeupdated"];
+				var timeupdated = child[TIMEUPDATED];
 
-				newBranchInfoArray[i] = new BranchInfo() { BranchName = child.Name, TimeUpdated = int.Parse(timeupdated.Value), BuildId = int.Parse(child["buildid"].Value) };
+				newBranchInfoArray[i] = new BranchInfo() { BranchName = child.Name, TimeUpdated = int.Parse(timeupdated.Value), BuildId = int.Parse(child[BUILDID].Value)};
 
-				if (child["description"] != KeyValue.Invalid)
+				if (child[DESCRIPTION] != KeyValue.Invalid)
 				{
-					newBranchInfoArray[i].Description = child["description"].Value;
+					newBranchInfoArray[i].Description = child[DESCRIPTION].Value;
+				}
+
+				if (child[PWDREQUIRED] != KeyValue.Invalid)
+				{
+					newBranchInfoArray[i].PwdRequired = int.Parse(child[PWDREQUIRED].Value);
 				}
 			}
 
@@ -170,7 +176,6 @@ public class Program
 		{
 			var guild = client.GetGuild(929708786027999262);
 			var channel = guild.GetTextChannel(939053638310064138); // #outer-wilds-chat
-			//var channel = guild.GetTextChannel(1057602032850186300); // #test-channel
 
 			List<Embed> embeds = new();
 
@@ -199,6 +204,13 @@ public class Program
 						IsInline = true
 					});
 				}
+
+				newEmbed.Fields.Add(new EmbedFieldBuilder()
+				{
+					Name = "Password Locked",
+					Value = item.PwdRequired == 1 ? "Yes" : "No",
+					IsInline = true
+				});
 
 				newEmbed.Fields.Add(new EmbedFieldBuilder()
 				{
@@ -247,6 +259,13 @@ public class Program
 						IsInline = true
 					});
 				}
+
+				newEmbed.Fields.Add(new EmbedFieldBuilder()
+				{
+					Name = "Password Locked",
+					Value = item.PwdRequired == 1 ? "Yes" : "No",
+					IsInline = true
+				});
 
 				newEmbed.Fields.Add(new EmbedFieldBuilder()
 				{
