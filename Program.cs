@@ -36,6 +36,8 @@ public class Program
 		var user = args[0];
 		var pass = args[1];
 
+		Console.WriteLine($"username:{user}");
+
 		var previous = JsonConvert.DeserializeObject<BranchInfo[]>(args[2]);
 
 		var discordToken = args[3];
@@ -78,8 +80,11 @@ public class Program
 
 		async void OnLoggedOn(SteamUser.LoggedOnCallback callback)
 		{
+			Console.WriteLine($"Received LoggedOn callback...");
+
 			if (callback.Result != EResult.OK)
 			{
+				Console.WriteLine($"Failed to log into Steam. Result:{callback.Result} ExtendedResult:{callback.Result}");
 				isRunning = false;
 				return;
 			}
