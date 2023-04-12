@@ -141,14 +141,16 @@ public class Program
 				}
 			}
 
-			foreach (var item2 in Directory.GetFiles("../../../../branches.json"))
+			Console.WriteLine(Directory.GetCurrentDirectory());
+
+			foreach (var item2 in Directory.GetFiles("../../../branches.json"))
 			{
 				Console.WriteLine(item2);
 			}
 
-			Console.WriteLine(File.Exists("../../../../branches.json"));
+			Console.WriteLine(File.Exists("../../../branches.json"));
 
-			previous = JsonConvert.DeserializeObject<BranchInfo[]>(File.ReadAllText("../../../../branches.json"));
+			previous = JsonConvert.DeserializeObject<BranchInfo[]>(File.ReadAllText("../../../branches.json"));
 
 			foreach (var oldBranch in previous)
 			{
