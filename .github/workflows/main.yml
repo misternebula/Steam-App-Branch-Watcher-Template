@@ -26,6 +26,8 @@ jobs:
       - name: Build
         run: dotnet build
         
+      
+        
       - name: Run program
         run: |
-          ./bin/Debug/net6.0/OuterWildsBranchWatcher.exe ${{ secrets.STEAM_USERNAME }} ${{ secrets.STEAM_PASSWORD }} "[]" ${{ secrets.BOT_TOKEN }}
+          ./bin/Debug/net6.0/OuterWildsBranchWatcher.exe '${{ secrets.STEAM_USERNAME }}' '${{ secrets.STEAM_PASSWORD }}' '[]' '${{ secrets.BOT_TOKEN }}'
