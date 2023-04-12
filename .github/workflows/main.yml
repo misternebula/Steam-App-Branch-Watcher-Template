@@ -15,7 +15,7 @@ jobs:
       - name: Read branches.json
         run: |
           echo "PREV=$(type branches.json)" >> $GITHUB_ENV
-          echo ${{ env.PREV }}
+          echo "${{ env.PREV }}"
         
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v3
