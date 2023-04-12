@@ -36,9 +36,9 @@ public class Program
 		var user = args[0];
 		var pass = args[1];
 
-		var previous = JsonConvert.DeserializeObject<BranchInfo[]>(args[3]);
+		var previous = JsonConvert.DeserializeObject<BranchInfo[]>(args[2]);
 
-		var discordToken = args[4];
+		var discordToken = args[3];
 
 		var steamClient = new SteamClient();
 		var manager = new CallbackManager(steamClient);
