@@ -36,7 +36,8 @@ public class Program
 		var user = args[0];
 		var pass = args[1];
 
-		Console.WriteLine($"username:{user}");
+		Console.WriteLine($"username length : {user.Length}");
+		Console.WriteLine($"password length : {pass.Length}");
 
 		var previous = JsonConvert.DeserializeObject<BranchInfo[]>(args[2]);
 
