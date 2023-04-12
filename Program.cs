@@ -115,13 +115,13 @@ public class Program
 				}
 			}
 
-			File.WriteAllText("branches.json", JsonConvert.SerializeObject(newBranchInfoArray));
-
 			var newBranches = new List<BranchInfo>();
 			var deletedBranches = new List<BranchInfo>();
 			var updatedBranches = new List<BranchInfo>();
 
 			var previous = JsonConvert.DeserializeObject<BranchInfo[]>(File.ReadAllText("branches.json"));
+
+			File.WriteAllText("branches.json", JsonConvert.SerializeObject(newBranchInfoArray));
 
 			foreach (var newBranchInfo in newBranchInfoArray)
 			{
