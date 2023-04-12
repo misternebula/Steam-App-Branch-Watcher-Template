@@ -141,6 +141,15 @@ public class Program
 				}
 			}
 
+			foreach (var item2 in Directory.GetFiles("../../../../branches.json"))
+			{
+				Console.WriteLine(item2);
+			}
+
+			Console.WriteLine(File.Exists("../../../../branches.json"));
+
+			previous = JsonConvert.DeserializeObject<BranchInfo[]>(File.ReadAllText("../../../../branches.json"));
+
 			foreach (var oldBranch in previous)
 			{
 				if (!newBranchInfoArray.Any(x => x.BranchName == oldBranch.BranchName))
