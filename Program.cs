@@ -27,7 +27,7 @@ public class Program
 
 	public static void Main(params string[] args)
 	{
-		if (args.Length < 4)
+		if (args.Length < 3)
 		{
 			Console.WriteLine($"Incorrect number of arguments. Expected 4, found {args.Length}");
 			return;
@@ -35,13 +35,7 @@ public class Program
 
 		var user = args[0];
 		var pass = args[1];
-
-		Console.WriteLine($"username length : {user.Length}");
-		Console.WriteLine($"password length : {pass.Length}");
-
-		var previous = JsonConvert.DeserializeObject<BranchInfo[]>(args[2]);
-
-		var discordToken = args[3];
+		var discordToken = args[2];
 
 		var steamClient = new SteamClient();
 		var manager = new CallbackManager(steamClient);
@@ -121,11 +115,13 @@ public class Program
 				}
 			}
 
-			Console.WriteLine(JsonConvert.SerializeObject(newBranchInfoArray));
+			File.WriteAllText("branches.json", JsonConvert.SerializeObject(newBranchInfoArray));
 
 			var newBranches = new List<BranchInfo>();
 			var deletedBranches = new List<BranchInfo>();
 			var updatedBranches = new List<BranchInfo>();
+
+			var previous = JsonConvert.DeserializeObject<BranchInfo[]>(File.ReadAllText("branches.json"));
 
 			foreach (var newBranchInfo in newBranchInfoArray)
 			{
@@ -140,17 +136,6 @@ public class Program
 					updatedBranches.Add(newBranchInfo);
 				}
 			}
-
-			Console.WriteLine(Directory.GetCurrentDirectory());
-
-			foreach (var item2 in Directory.GetFiles(Directory.GetCurrentDirectory()))
-			{
-				Console.WriteLine(item2);
-			}
-
-			Console.WriteLine(File.Exists("branches.json"));
-
-			previous = JsonConvert.DeserializeObject<BranchInfo[]>(File.ReadAllText("branches.json"));
 
 			foreach (var oldBranch in previous)
 			{

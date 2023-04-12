@@ -28,4 +28,13 @@ jobs:
         
       - name: Run program
         run: |
-          ./bin/Debug/net6.0/OuterWildsBranchWatcher.exe '${{ secrets.STEAM_USERNAME }}' '${{ secrets.STEAM_PASSWORD }}' '[]' '${{ secrets.BOT_TOKEN }}'
+          ./bin/Debug/net6.0/OuterWildsBranchWatcher.exe '${{ secrets.STEAM_USERNAME }}' '${{ secrets.STEAM_PASSWORD }}' '${{ secrets.BOT_TOKEN }}'
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+          git commit -m "Updated branches.json"
+          git push
