@@ -5,7 +5,7 @@ on:
   
 jobs:
   check:
-    if: ${{ github.repository != "misternebula/Steam-App-Branch-Watcher-Template" }}
+    if: ${{ github.repository != 'misternebula/Steam-App-Branch-Watcher-Template' }}
     name: check steam branches
     runs-on: windows-latest
     
