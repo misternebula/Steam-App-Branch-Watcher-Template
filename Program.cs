@@ -1,7 +1,7 @@
-﻿using Discord;
-using Discord.WebSocket;
+﻿using CSharpDiscordWebhook.NET.Discord;
 using Newtonsoft.Json;
 using SteamKit2;
+using System.Drawing;
 
 namespace OuterWildsBranchWatcher;
 
@@ -25,8 +25,6 @@ public class BranchInfo
 
 public class Program
 {
-	public const int OW_APPID = 753640;
-
 	const string BUILDID = "buildid";
 	const string DEPOTS = "depots";
 	const string BRANCHES = "branches";
@@ -38,7 +36,8 @@ public class Program
 	{
 		var user = args[0];
 		var pass = args[1];
-		var discordToken = args[2];
+		var webhook = args[3];
+		var appid = uint.Parse(args[4]);
 
 		var steamClient = new SteamClient();
 		var manager = new CallbackManager(steamClient);
@@ -87,7 +86,7 @@ public class Program
 
 			Console.WriteLine($"Logged into Steam.");
 
-			await appHandler.PICSGetProductInfo(new SteamApps.PICSRequest(OW_APPID), null, false);
+			await appHandler.PICSGetProductInfo(new SteamApps.PICSRequest(appid), null, false);
 		}
 
 		void OnPICSProductInfo(SteamApps.PICSProductInfoCallback callback)
@@ -154,7 +153,115 @@ public class Program
 			if (newBranches.Count > 0 || updatedBranches.Count > 0)
 			{
 				Console.WriteLine($"Found changes.");
-				new Program().MainAsync(discordToken, newBranches, deletedBranches, updatedBranches).Wait();
+
+				var hook = new DiscordWebhook
+				{
+					Uri = new Uri(webhook)
+				};
+
+				var message = new DiscordMessage();
+
+				foreach (var newBranch in newBranches)
+				{
+					var embed = new DiscordEmbed
+					{
+						Title = "New Branch",
+						Color = new DiscordColor(Color.Green),
+						Description = $"The branch `{newBranch.BranchName}` was added at <t:{newBranch.TimeUpdated}:F>.",
+						Fields = new List<EmbedField>()
+					};
+
+					embed.Fields.Add(new EmbedField()
+					{
+						Name = "Name",
+						Value = newBranch.BranchName,
+						Inline = true
+					});
+
+					if (newBranch.Description != "")
+					{
+						embed.Fields.Add(new EmbedField()
+						{
+							Name = "Description",
+							Value = newBranch.Description,
+							Inline = true
+						});
+					}
+
+					embed.Fields.Add(new EmbedField()
+					{
+						Name = "Password Locked",
+						Value = newBranch.PwdRequired == 1 ? "Yes" : "No",
+						Inline = true
+					});
+
+					embed.Fields.Add(new EmbedField()
+					{
+						Name = "BuildId",
+						Value = newBranch.BuildId.ToString(),
+						Inline = true
+					});
+
+					message.Embeds.Add(embed);
+				}
+
+				foreach (var deletedBranch in deletedBranches)
+				{
+					var embed = new DiscordEmbed
+					{
+						Title = "Deleted Branch",
+						Color = new DiscordColor(Color.Red),
+						Description = $"The branch `{deletedBranch.BranchName}` was deleted.",
+						Fields = new List<EmbedField>()
+					};
+					message.Embeds.Add(embed);
+				}
+
+				foreach (var updatedBranch in updatedBranches)
+				{
+					var embed = new DiscordEmbed
+					{
+						Title = "Updated Branch",
+						Color = new DiscordColor(Color.Orange),
+						Description = $"The branch `{updatedBranch.BranchName}` was updated at <t:{updatedBranch.TimeUpdated}:F>.",
+						Fields = new List<EmbedField>()
+					};
+
+					embed.Fields.Add(new EmbedField()
+					{
+						Name = "Name",
+						Value = updatedBranch.BranchName,
+						Inline = true
+					});
+
+					if (updatedBranch.Description != "")
+					{
+						embed.Fields.Add(new EmbedField()
+						{
+							Name = "Description",
+							Value = updatedBranch.Description,
+							Inline = true
+						});
+					}
+
+					embed.Fields.Add(new EmbedField()
+					{
+						Name = "Password Locked",
+						Value = updatedBranch.PwdRequired == 1 ? "Yes" : "No",
+						Inline = true
+					});
+
+					embed.Fields.Add(new EmbedField()
+					{
+						Name = "BuildId",
+						Value = updatedBranch.BuildId.ToString(),
+						Inline = true
+					});
+
+					message.Embeds.Add(embed);
+				}
+
+				hook.SendAsync(message);
 			}
 			else
 			{
@@ -163,132 +270,5 @@ public class Program
 
 			steamUser.LogOff();
 		}
-	}
-
-	public async Task MainAsync(string discordToken, List<BranchInfo> newBranches, List<BranchInfo> deletedBranches, List<BranchInfo> updatedBranches)
-	{
-		var client = new DiscordSocketClient();
-		client.Log += Log;
-		await client.LoginAsync(TokenType.Bot, discordToken);
-		await client.StartAsync();
-
-		client.Ready += async () =>
-		{
-			var guild = client.GetGuild(929708786027999262);
-			var channel = guild.GetTextChannel(939053638310064138); // #outer-wilds-chat
-
-			List<Embed> embeds = new();
-
-			foreach (var item in newBranches)
-			{
-				var newEmbed = new EmbedBuilder()
-				{
-					Title = "New Branch",
-					Color = Color.Green,
-					Description = $"The branch `{item.BranchName}` was added at <t:{item.TimeUpdated}:F>."
-				};
-
-				newEmbed.Fields.Add(new EmbedFieldBuilder()
-				{
-					Name = "Name",
-					Value = item.BranchName,
-					IsInline = true
-				});
-
-				if (item.Description != "")
-				{
-					newEmbed.Fields.Add(new EmbedFieldBuilder()
-					{
-						Name = "Description",
-						Value = item.Description,
-						IsInline = true
-					});
-				}
-
-				newEmbed.Fields.Add(new EmbedFieldBuilder()
-				{
-					Name = "Password Locked",
-					Value = item.PwdRequired == 1 ? "Yes" : "No",
-					IsInline = true
-				});
-
-				newEmbed.Fields.Add(new EmbedFieldBuilder()
-				{
-					Name = "BuildId",
-					Value = item.BuildId,
-					IsInline = true
-				});
-
-				embeds.Add(newEmbed.Build());
-			}
-
-			foreach (var item in deletedBranches)
-			{
-				var newEmbed = new EmbedBuilder()
-				{
-					Title = "Deleted Branch",
-					Color = Color.Red,
-					Description = $"The branch `{item.BranchName}` was deleted."
-				};
-
-				embeds.Add(newEmbed.Build());
-			}
-
-			foreach (var item in updatedBranches)
-			{
-				var newEmbed = new EmbedBuilder()
-				{
-					Title = "Updated Branch",
-					Color = Color.Orange,
-					Description = $"The branch `{item.BranchName}` was updated at <t:{item.TimeUpdated}:F>."
-				};
-
-				newEmbed.Fields.Add(new EmbedFieldBuilder()
-				{
-					Name = "Name",
-					Value = item.BranchName,
-					IsInline = true
-				});
-
-				if (item.Description != "")
-				{
-					newEmbed.Fields.Add(new EmbedFieldBuilder()
-					{
-						Name = "Description",
-						Value = item.Description,
-						IsInline = true
-					});
-				}
-
-				newEmbed.Fields.Add(new EmbedFieldBuilder()
-				{
-					Name = "Password Locked",
-					Value = item.PwdRequired == 1 ? "Yes" : "No",
-					IsInline = true
-				});
-
-				newEmbed.Fields.Add(new EmbedFieldBuilder()
-				{
-					Name = "BuildId",
-					Value = item.BuildId,
-					IsInline = true
-				});
-
-				embeds.Add(newEmbed.Build());
-			}
-
-			await channel.SendMessageAsync(null, embeds: embeds.ToArray());
-
-			await client.LogoutAsync();
-			Environment.Exit(0);
-		};
-
-		await Task.Delay(-1);
-	}
-
-	private Task Log(LogMessage msg)
-	{
-		Console.WriteLine(msg.ToString());
-		return Task.CompletedTask;
 	}
 }
