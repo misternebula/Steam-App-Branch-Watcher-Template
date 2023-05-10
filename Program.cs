@@ -36,8 +36,8 @@ public class Program
 	{
 		var user = args[0];
 		var pass = args[1];
-		var webhook = args[3];
-		var appid = uint.Parse(args[4]);
+		var webhook = args[2];
+		var appid = uint.Parse(args[3]);
 
 		var steamClient = new SteamClient();
 		var manager = new CallbackManager(steamClient);
