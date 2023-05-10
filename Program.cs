@@ -152,14 +152,16 @@ public class Program
 
 			if (newBranches.Count > 0 || updatedBranches.Count > 0)
 			{
-				Console.WriteLine($"Found changes.");
+				Console.WriteLine($"Found changes - {newBranches.Count} new branches, {deletedBranches.Count} deleted branches, {updatedBranches.Count} updated branches.");
 
 				var hook = new DiscordWebhook
 				{
 					Uri = new Uri(webhook)
 				};
 
-				var message = new DiscordMessage();
+				var messageList = new List<DiscordMessage>();
+
+				messageList.Add(new DiscordMessage());
 
 				foreach (var newBranch in newBranches)
 				{
@@ -202,7 +204,12 @@ public class Program
 						Inline = true
 					});
 
-					message.Embeds.Add(embed);
+					if (messageList.Last().Embeds.Count >= 10)
+					{
+						messageList.Add(new DiscordMessage());
+					}
+
+					messageList.Last().Embeds.Add(embed);
 				}
 
 				foreach (var deletedBranch in deletedBranches)
@@ -214,7 +221,13 @@ public class Program
 						Description = $"The branch `{deletedBranch.BranchName}` was deleted.",
 						Fields = new List<EmbedField>()
 					};
-					message.Embeds.Add(embed);
+
+					if (messageList.Last().Embeds.Count >= 10)
+					{
+						messageList.Add(new DiscordMessage());
+					}
+
+					messageList.Last().Embeds.Add(embed);
 				}
 
 				foreach (var updatedBranch in updatedBranches)
@@ -258,10 +271,18 @@ public class Program
 						Inline = true
 					});
 
-					message.Embeds.Add(embed);
+					if (messageList.Last().Embeds.Count >= 10)
+					{
+						messageList.Add(new DiscordMessage());
+					}
+
+					messageList.Last().Embeds.Add(embed);
 				}
 
-				hook.SendAsync(message);
+				foreach (var message in messageList)
+				{
+					hook.SendAsync(message);
+				}
 			}
 			else
 			{
