@@ -28,7 +28,7 @@ jobs:
         
       - name: Run program
         run: |
-          ./bin/Debug/net6.0/OuterWildsBranchWatcher.exe '${{ secrets.STEAM_USERNAME }}' '${{ secrets.STEAM_PASSWORD }}' '${{ secrets.DISCORD_WEBHOOK }}' '${{ secrets.APPID }}'
+          ./bin/Debug/net6.0/SteamAppBranchWatcher.exe '${{ secrets.STEAM_USERNAME }}' '${{ secrets.STEAM_PASSWORD }}' '${{ secrets.DISCORD_WEBHOOK }}' '${{ secrets.APPID }}'
 
       - name: Commit and push changes
         run: |

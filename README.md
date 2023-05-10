@@ -1,9 +1,9 @@
-# Outer Wilds Branch Watcher
-Posts updates about the Steam branches of Outer Wilds to the modding discord.
+# Steam App Branch Watcher
+Posts updates about the Steam branches of any app to the Discord.
 
-## Extending this for other games
+# Using this template
 
-Simply add the right secrets with the right values, and everything should work 
+Simply add the right secrets with the right values, and everything should work .
 
 **Note : This code will not work for Steam packages, only Apps.**
 
