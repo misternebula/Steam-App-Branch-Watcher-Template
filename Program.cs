@@ -1,7 +1,9 @@
 ﻿using CSharpDiscordWebhook.NET.Discord;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using SteamKit2;
 using System.Drawing;
+using System.Net;
 
 namespace OuterWildsBranchWatcher;
 
@@ -23,6 +25,13 @@ public class BranchInfo
 	public int PwdRequired = 0;
 }
 
+public class PriceInfo
+{
+	public int initialPrice = 0;
+	public int currentPrice = 0;
+	public int discountPercent = 0;
+}
+
 public class Program
 {
 	const string BUILDID = "buildid";
@@ -31,6 +40,8 @@ public class Program
 	const string TIMEUPDATED = "timeupdated";
 	const string PWDREQUIRED = "pwdrequired";
 	const string DESCRIPTION = "description";
+	const string COMMON = "common";
+	const string APP_NAME = "name";
 
 	public static void Main(params string[] args)
 	{
@@ -99,6 +110,9 @@ public class Program
 			var depots = KeyValues[DEPOTS];
 			var branches = depots[BRANCHES];
 
+			var common = KeyValues[COMMON];
+			var appName = common[APP_NAME].Value;
+
 			var newBranchInfoArray = new BranchInfo[branches.Children.Count];
 
 			for (var i = 0; i < branches.Children.Count; i++)
@@ -123,6 +137,11 @@ public class Program
 			var newBranches = new List<BranchInfo>();
 			var deletedBranches = new List<BranchInfo>();
 			var updatedBranches = new List<BranchInfo>();
+
+			if (!File.Exists("branches.json"))
+			{
+				File.WriteAllText("branches.json", JsonConvert.SerializeObject(new BranchInfo[] {}));
+			}
 
 			var previous = JsonConvert.DeserializeObject<BranchInfo[]>(File.ReadAllText("branches.json"));
 
@@ -150,6 +169,27 @@ public class Program
 				}
 			}
 
+			// check for price update
+			var json = new WebClient().DownloadString($"https://store.steampowered.com/api/appdetails?appids={appid}&cc=us&filters=price_overview");
+
+			var jObject = JObject.Parse(json);
+
+			var priceOverview = jObject[$"{appid}"]["data"]["price_overview"];
+			var initialPrice = (int)priceOverview["initial"];
+			var currentPrice = (int)priceOverview["final"];
+			var discountPercent = (int)priceOverview["discount_percent"];
+
+			if (!File.Exists("price.json"))
+			{
+				File.WriteAllText("price.json", JsonConvert.SerializeObject(new PriceInfo()));
+			}
+
+			var oldPrice = JsonConvert.DeserializeObject<PriceInfo>(File.ReadAllText("price.json"));
+			var actualPriceHasChanged = initialPrice != oldPrice.initialPrice;
+			var isOnSale = currentPrice != oldPrice.currentPrice;
+
+			File.WriteAllText("price.json", JsonConvert.SerializeObject(new PriceInfo() { currentPrice = currentPrice, initialPrice = initialPrice, discountPercent = discountPercent}));
+
 			if (newBranches.Count > 0 || updatedBranches.Count > 0)
 			{
 				Console.WriteLine($"Found changes - {newBranches.Count} new branches, {deletedBranches.Count} deleted branches, {updatedBranches.Count} updated branches.");
@@ -170,7 +210,8 @@ public class Program
 						Title = "New Branch",
 						Color = new DiscordColor(Color.Green),
 						Description = $"The branch `{newBranch.BranchName}` was added at <t:{newBranch.TimeUpdated}:F>.",
-						Fields = new List<EmbedField>()
+						Fields = new List<EmbedField>(),
+						Footer = new EmbedFooter() { Text = appName }
 					};
 
 					embed.Fields.Add(new EmbedField()
@@ -219,7 +260,8 @@ public class Program
 						Title = "Deleted Branch",
 						Color = new DiscordColor(Color.Red),
 						Description = $"The branch `{deletedBranch.BranchName}` was deleted.",
-						Fields = new List<EmbedField>()
+						Fields = new List<EmbedField>(),
+						Footer = new EmbedFooter() { Text = appName }
 					};
 
 					if (messageList.Last().Embeds.Count >= 10)
@@ -237,7 +279,8 @@ public class Program
 						Title = "Updated Branch",
 						Color = new DiscordColor(Color.Orange),
 						Description = $"The branch `{updatedBranch.BranchName}` was updated at <t:{updatedBranch.TimeUpdated}:F>.",
-						Fields = new List<EmbedField>()
+						Fields = new List<EmbedField>(),
+						Footer = new EmbedFooter() { Text = appName }
 					};
 
 					embed.Fields.Add(new EmbedField()
@@ -284,9 +327,76 @@ public class Program
 					hook.SendAsync(message);
 				}
 			}
-			else
+
+			if (actualPriceHasChanged || isOnSale)
 			{
-				Console.WriteLine($"No changes found.");
+				var hook = new DiscordWebhook
+				{
+					Uri = new Uri(webhook)
+				};
+
+				var message = new DiscordMessage();
+
+				if (actualPriceHasChanged)
+				{
+					var embed = new DiscordEmbed()
+					{
+						Title = "Price Change",
+						Color = new DiscordColor(Color.LightBlue),
+						Description = $"The base price has changed from ${oldPrice.initialPrice / 100f:F2} to ${initialPrice / 100f:F2}",
+						Footer = new EmbedFooter() { Text = appName }
+					};
+					message.Embeds.Add(embed);
+				}
+				else
+				{
+					if (oldPrice.discountPercent == 0)
+					{
+						var embed = new DiscordEmbed()
+						{
+							Title = "Sale Started!",
+							Color = new DiscordColor(Color.LightBlue),
+							Description = $"A sale has started! From ${initialPrice / 100f:F2} to ${currentPrice / 100f:F2} ({discountPercent}% off).",
+							Footer = new EmbedFooter() { Text = appName }
+						};
+						message.Embeds.Add(embed);
+					}
+					else if (currentPrice < oldPrice.currentPrice)
+					{
+						var embed = new DiscordEmbed()
+						{
+							Title = "Sale Update",
+							Color = new DiscordColor(Color.LightBlue),
+							Description = $"The sale has increased! From ${oldPrice.currentPrice / 100f:F2} ({oldPrice.discountPercent}% off) to ${currentPrice / 100f:F2} ({discountPercent}% off).",
+							Footer = new EmbedFooter() { Text = appName }
+						};
+						message.Embeds.Add(embed);
+					}
+					else if (currentPrice == oldPrice.initialPrice)
+					{
+						var embed = new DiscordEmbed()
+						{
+							Title = "Sale Ended",
+							Color = new DiscordColor(Color.LightBlue),
+							Description = $"The sale has ended. Back to ${initialPrice / 100f:F2}.",
+							Footer = new EmbedFooter() { Text = appName }
+						};
+						message.Embeds.Add(embed);
+					}
+					else if (currentPrice > oldPrice.currentPrice)
+					{
+						var embed = new DiscordEmbed()
+						{
+							Title = "Sale Update",
+							Color = new DiscordColor(Color.LightBlue),
+							Description = $"The sale has decreased. From ${oldPrice.currentPrice / 100f:F2} ({oldPrice.discountPercent}% off) to ${currentPrice / 100f:F2} ({discountPercent}% off).",
+							Footer = new EmbedFooter() { Text = appName }
+						};
+						message.Embeds.Add(embed);
+					}
+				}
+
+				hook.SendAsync(message);
 			}
 
 			steamUser.LogOff();
